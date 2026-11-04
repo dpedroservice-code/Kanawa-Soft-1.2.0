@@ -91,3 +91,12 @@ test('invoice template does not claim AGT software certification', () => {
   assert.match(app, /Referência interna da factura/);
   assert.match(app, /validação oficial AGT só é confirmada após resposta aceite/);
 });
+
+test('production setup never seeds demo records or exposes demo reload controls', () => {
+  const app = read('app/app.js');
+  const html = read('app/index.html');
+  assert.doesNotMatch(app, /seedDemo|recarregarDemo|João Silva|Maria Santos|Caneta Esferográfica/);
+  assert.doesNotMatch(html, /setupCarregarDemo|Carregar dados de demonstração/);
+  assert.match(app, /KanawaCloud\.upsertRecord\(store, record/);
+  assert.match(app, /pullFromServer\(\)/);
+});

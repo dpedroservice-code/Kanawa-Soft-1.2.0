@@ -1926,7 +1926,6 @@ async function renderConfig() {
      '<div class="card"><div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i> Cache local (IndexedDB) + PostgreSQL central</h3></div>' + table(['Coleção', 'Registros', 'Ações'], countRows) + '</div>' +
     '<div class="card"><div class="card-header"><h3 class="card-title"><i class="fas fa-tools"></i> Ferramentas</h3></div>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-    '<button class="btn btn-warning" onclick="recarregarDemo()"><i class="fas fa-seedling"></i> Dados Demo</button>' +
     '<button class="btn btn-info" onclick="exportarBackupCompleto()"><i class="fas fa-download"></i> Backup</button>' +
     '<button class="btn btn-danger" onclick="resetTotal()"><i class="fas fa-bomb"></i> Reset Total</button></div></div>';
 }
@@ -1982,7 +1981,6 @@ function salvarRegras() {
 function salvarConfigAPI() { toast('A ligação central é gerida automaticamente pelo Kanawa Soft Cloud.', 'info'); }
 async function testarAPI() { const ok = await API.checkHealth(); toast(ok ? '✅ Servidor Online' : '❌ Servidor Offline', ok ? 'success' : 'warning'); }
 async function limparColecao(s) { if (!confirm('Limpar ' + s + '?')) return; await DB.clear(s); toast('Limpo', 'info'); openModule('config'); }
-async function recarregarDemo() { if (!confirm('Carregar demo?')) return; await seedDemo(); pdvCache.ts = 0; toast('Demo carregado', 'success'); openModule('config'); }
 async function resetTotal() {
   if (!confirm('⚠️ REPOR TODOS OS DADOS DE NEGÓCIO DA EMPRESA? Produtos, stock, vendas, clientes, registos e formação serão eliminados definitivamente da nuvem e deste dispositivo. A conta, empresa principal, utilizadores e licença serão mantidos; chaves de API, pagamentos e credenciais fiscais serão apagados.')) return;
   if (!confirm('ÚLTIMA CONFIRMAÇÃO: exportou um backup e quer mesmo apagar os dados de negócio da empresa em todos os dispositivos?')) return;
@@ -2048,7 +2046,6 @@ async function finalizarSetup() {
     localStorage.setItem('kanawa_legacy_company', JSON.stringify(sameLocalCompany ? existingLocalCompany : company));
     await DB.put('empresas', company);
     await DB.put('usuarios', localUser);
-    if ($('setupCarregarDemo') && $('setupCarregarDemo').checked) await seedDemo();
 
     if (result.session && KanawaCloud.ready) {
       await activateCloudSession(KanawaCloud.context, true);
@@ -2987,27 +2984,6 @@ async function renderServicos() {
 async function novoServico() { const n = prompt('Nome do serviço:'); if (!n) return; await saveData('servicos', { codigo: 'SRV-' + String(Date.now()).slice(-6), nome: n, descricao: prompt('Descrição:') || '', preco: parseFloat(prompt('Preço:', '0')) || 0, duracao: prompt('Duração:', '1h') || '1h', status: 'ativo' }); toast('Serviço criado', 'success'); openModule('servicos'); }
 async function editarServico(id) { const s = await DB.get('servicos', id); if (!s) return; const n = prompt('Novo nome:', s.nome); if (n) { s.nome = n; await saveData('servicos', s); toast('Atualizado', 'success'); openModule('servicos'); } }
 
-/* ====== SEED ====== */
-async function seedDemo() {
-  if ((await DB.count('produtos')) > 0) return;
-  const produtos = [
-    { codigo: 'P001', codigoBarras: '7501234567890', nome: 'Caneta Esferográfica', preco: 150, estoque: 50, estoqueMin: 10, categoria: 'Papelaria' },
-    { codigo: 'P002', codigoBarras: '7501234567891', nome: 'Caderno 100 Folhas', preco: 450, estoque: 30, estoqueMin: 5, categoria: 'Papelaria' },
-    { codigo: 'P003', codigoBarras: '7501234567892', nome: 'Mochila Escolar', preco: 2500, estoque: 15, estoqueMin: 3, categoria: 'Acessórios' },
-    { codigo: 'P004', codigoBarras: '7501234567893', nome: 'Calculadora Científica', preco: 1200, estoque: 8, estoqueMin: 2, categoria: 'Eletrônicos' },
-    { codigo: 'P005', codigoBarras: '7501234567894', nome: 'Fita Adesiva', preco: 80, estoque: 100, estoqueMin: 20, categoria: 'Papelaria' },
-    { codigo: 'P006', codigoBarras: '7501234567895', nome: 'Pasta Arquivo', preco: 200, estoque: 25, estoqueMin: 5, categoria: 'Papelaria' }
-  ];
-  for (const p of produtos) await DB.add('produtos', p);
-  await DB.add('clientes', { nome: 'João Silva', nif: '006518595L', telefone: '+244 900 000 001', email: 'joao@email.com', dataCadastro: now() });
-  await DB.add('clientes', { nome: 'Maria Santos', telefone: '+244 900 000 002', email: 'maria@email.com', dataCadastro: now() });
-  await DB.add('categorias', { nome: 'Papelaria', descricao: 'Materiais de escritório' });
-  await DB.add('categorias', { nome: 'Eletrônicos', descricao: 'Dispositivos' });
-  await DB.add('categorias', { nome: 'Acessórios', descricao: 'Acessórios diversos' });
-  await DB.add('funcionarios', { nome: 'Ana Costa', cargo: 'Vendedora', salario: 120000 });
-  await DB.add('notificacoes', { titulo: '🎉 Bem-vindo', mensagem: 'Kanawa Soft ERP v1.2.0 Cloud ligado à base central!', tipo: 'success', data: now(), lida: false });
-}
-
 /* ====== INIT ====== */
 async function init() {
   try {
@@ -3118,7 +3094,7 @@ const EXPORTS = [
   'converterOrcamento',
   'criarNotificacao','marcarNotificacaoLida','marcarTodasLidas','updateNotifBadge',
   'salvarConfigEmpresa','salvarRegras','salvarConfigAPI','testarAPI',
-  'limparColecao','recarregarDemo','resetTotal',
+  'limparColecao','resetTotal',
   'escolherLogoEmpresa','removerLogoEmpresa',
   'escolherAvatarPerfil','removerAvatarPerfil','salvarPerfil','alterarSenhaPerfil',
   'abrirModalDispositivo','salvarDispositivo','definirPadrao','testarImpressora','abrirGaveta',

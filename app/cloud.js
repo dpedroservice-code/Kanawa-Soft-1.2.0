@@ -120,6 +120,7 @@
         email: details.email,
         password: details.password,
         options: {
+          emailRedirectTo: details.emailRedirectTo || window.location.origin,
           data: {
             full_name: details.fullName,
             phone: details.phone || '',

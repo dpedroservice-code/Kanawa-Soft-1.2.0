@@ -344,6 +344,13 @@ tr:hover td{background:var(--bg-hover)}
       <div class="form-group"><label>🔒 Senha</label><input type="password" id="loginPassword" required autocomplete="current-password" placeholder="A sua senha"></div>
       <button type="submit" class="btn btn-primary btn-block btn-lg"><i class="fas fa-sign-in-alt"></i> Entrar</button>
     </form>
+    <div id="signupOtpPanel" class="card" style="display:none;margin-top:16px">
+      <h3 style="margin-bottom:8px">Confirmar email</h3>
+      <p style="font-size:.9rem;color:var(--text-muted)">Enviámos um código de 6 dígitos para <strong id="signupOtpEmail"></strong>. Introduza-o para ativar a conta.</p>
+      <div class="form-group" style="margin-top:14px"><label for="signupOtpCode">Código de confirmação</label><input id="signupOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"></div>
+      <button id="signupOtpVerify" type="button" class="btn btn-primary btn-block" onclick="confirmarCodigoEmail()">Confirmar código</button>
+      <button type="button" class="btn btn-secondary btn-block" style="margin-top:8px" onclick="reenviarCodigoEmail()">Reenviar código</button>
+    </div>
     <div style="text-align:center;margin-top:16px"><button type="button" class="btn btn-block" style="background:transparent;border:1px solid var(--primary);color:var(--primary)" onclick="abrirCadastroEmpresa()"><i class="fas fa-building"></i> Criar conta e configurar empresa</button><p style="font-size:.75rem;color:var(--text-muted);margin-top:10px">Os seus dados ficam guardados na base de dados central e podem ser consultados em vários dispositivos.</p></div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center"><a class="btn btn-secondary" href="manual.html" target="_blank"><i class="fas fa-book-open"></i> Manual de Apoio</a><a class="btn btn-secondary" href="mailto:dpedroservice@gmail.com"><i class="fas fa-headset"></i> Apoio ao Cliente</a><div style="grid-column:1/-1;font-size:.78rem;color:var(--text-muted)">dpedroservice@gmail.com · <a href="https://kanawasoft.shop" target="_blank">kanawasoft.shop</a><br>Telefone de apoio: <span id="kanawaSupportPhone">a configurar pela administração</span>.</div></div>
   </div>

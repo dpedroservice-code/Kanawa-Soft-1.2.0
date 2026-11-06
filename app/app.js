@@ -2033,7 +2033,8 @@ async function finalizarSetup() {
       phone: $('setupTelefone').value,
       companyName: companyName,
       taxId: taxId,
-      taxRegime: $('setupRegime').value
+      taxRegime: $('setupRegime').value,
+      emailRedirectTo: window.location.origin
     });
 
     const existingLocalCompany = await DB.get('empresas', 1);

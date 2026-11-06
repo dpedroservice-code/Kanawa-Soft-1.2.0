@@ -120,7 +120,7 @@
         email: details.email,
         password: details.password,
         options: {
-          emailRedirectTo: details.emailRedirectTo || window.location.origin,
+          emailRedirectTo: details.emailRedirectTo || 'https://kanawasoft.shop',
           data: {
             full_name: details.fullName,
             phone: details.phone || '',
@@ -142,6 +142,19 @@
         session: result.data.session,
         needsEmailConfirmation: !result.data.session
       };
+    },
+    async verifySignupOtp(email, token) {
+      if (!client) throw new Error('Biblioteca de ligação à base de dados não carregou. Atualize a página.');
+      const result = await client.auth.verifyOtp({ email: email, token: token, type: 'signup' });
+      if (result.error) throw result.error;
+      return await loadContext(result.data.user);
+    },
+
+    async resendSignupOtp(email) {
+      if (!client) throw new Error('Biblioteca de ligação à base de dados não carregou. Atualize a página.');
+      const result = await client.auth.resend({ type: 'signup', email: email, options: { emailRedirectTo: 'https://kanawasoft.shop' } });
+      if (result.error) throw result.error;
+      return result.data;
     },
 
     async changePassword(currentPassword, newPassword) {

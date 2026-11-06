@@ -2057,6 +2057,7 @@ async function finalizarSetup() {
       toast('Conta criada e empresa ligada à base de dados central.', 'success');
     } else {
       localStorage.setItem('kanawa_pending_email', email);
+      localStorage.setItem('kanawa_pending_auth_type', 'signup');
       if ($('setupWizard')) $('setupWizard').classList.remove('active');
       if ($('authScreen')) $('authScreen').classList.add('active');
       if ($('loginEmail')) $('loginEmail').value = email;
@@ -2071,6 +2072,22 @@ async function finalizarSetup() {
   }
 }
 
+async function enviarCodigoAcessoEmail() {
+  const email = ($('loginEmail') && $('loginEmail').value || '').trim();
+  if (!email) return toast('Introduza primeiro o seu email.', 'warning');
+  try {
+    await KanawaCloud.sendLoginOtp(email);
+    localStorage.setItem('kanawa_pending_email', email);
+    localStorage.setItem('kanawa_pending_auth_type', 'login');
+    if ($('loginForm')) $('loginForm').style.display = 'none';
+    if ($('signupOtpPanel')) $('signupOtpPanel').style.display = 'block';
+    if ($('signupOtpEmail')) $('signupOtpEmail').textContent = email;
+    toast('Código de acesso enviado. Verifique a caixa de entrada e o spam.', 'success');
+  } catch (error) {
+    toast(error.message || 'Não foi possível enviar o código de acesso.', 'error');
+  }
+}
+
 async function confirmarCodigoEmail() {
   const email = localStorage.getItem('kanawa_pending_email') || ($('signupOtpEmail') && $('signupOtpEmail').textContent) || '';
   const token = ($('signupOtpCode') && $('signupOtpCode').value || '').replace(/\D/g, '').trim();
@@ -2082,9 +2099,13 @@ async function confirmarCodigoEmail() {
   const button = $('signupOtpVerify');
   if (button) button.disabled = true;
   try {
-    const ctx = await KanawaCloud.verifySignupOtp(email, token);
+    const mode = localStorage.getItem('kanawa_pending_auth_type') || 'signup';
+    const ctx = mode === 'login'
+      ? await KanawaCloud.verifyLoginOtp(email, token)
+      : await KanawaCloud.verifySignupOtp(email, token);
     await activateCloudSession(ctx, true);
     localStorage.removeItem('kanawa_pending_email');
+    localStorage.removeItem('kanawa_pending_auth_type');
     if ($('signupOtpPanel')) $('signupOtpPanel').style.display = 'none';
     if ($('loginForm')) $('loginForm').style.display = '';
     mostrarAplicacaoAutenticada(ctx);
@@ -2101,7 +2122,9 @@ async function reenviarCodigoEmail() {
   const email = localStorage.getItem('kanawa_pending_email') || ($('signupOtpEmail') && $('signupOtpEmail').textContent) || '';
   if (!email) return toast('Não foi encontrado um email pendente.', 'warning');
   try {
-    await KanawaCloud.resendSignupOtp(email);
+    const mode = localStorage.getItem('kanawa_pending_auth_type') || 'signup';
+    if (mode === 'login') await KanawaCloud.resendLoginOtp(email);
+    else await KanawaCloud.resendSignupOtp(email);
     toast('Novo código solicitado. Verifique a caixa de entrada e o spam.', 'success');
   } catch (error) {
     toast(error.message || 'Não foi possível reenviar o código. Aguarde antes de tentar novamente.', 'error');
@@ -3078,6 +3101,12 @@ async function init() {
       if ($('setupWizard')) $('setupWizard').classList.remove('active');
       if ($('authScreen')) $('authScreen').classList.add('active');
       if ($('loginEmail')) $('loginEmail').value = localStorage.getItem('kanawa_pending_email') || '';
+      const pendingEmail = localStorage.getItem('kanawa_pending_email');
+      if (pendingEmail && localStorage.getItem('kanawa_pending_auth_type')) {
+        if ($('loginForm')) $('loginForm').style.display = 'none';
+        if ($('signupOtpPanel')) $('signupOtpPanel').style.display = 'block';
+        if ($('signupOtpEmail')) $('signupOtpEmail').textContent = pendingEmail;
+      }
     }
 
     const loginForm = $('loginForm');

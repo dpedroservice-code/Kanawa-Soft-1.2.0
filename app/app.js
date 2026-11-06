@@ -2034,7 +2034,7 @@ async function finalizarSetup() {
       companyName: companyName,
       taxId: taxId,
       taxRegime: $('setupRegime').value,
-      emailRedirectTo: window.location.origin
+      emailRedirectTo: 'https://kanawasoft.shop'
     });
 
     const existingLocalCompany = await DB.get('empresas', 1);
@@ -2060,11 +2060,51 @@ async function finalizarSetup() {
       if ($('setupWizard')) $('setupWizard').classList.remove('active');
       if ($('authScreen')) $('authScreen').classList.add('active');
       if ($('loginEmail')) $('loginEmail').value = email;
-      toast('Conta criada. Confirme o email recebido e depois entre no Kanawa Soft.', 'success');
+      if ($('loginForm')) $('loginForm').style.display = 'none';
+      if ($('signupOtpPanel')) $('signupOtpPanel').style.display = 'block';
+      if ($('signupOtpEmail')) $('signupOtpEmail').textContent = email;
+      toast('Conta criada. Introduza o código de 6 dígitos enviado para o seu email.', 'success');
     }
   } catch (e) {
     console.error('Erro ao criar conta Kanawa:', e);
     toast('Não foi possível criar a conta: ' + (e.message || 'erro de ligação'), 'error');
+  }
+}
+
+async function confirmarCodigoEmail() {
+  const email = localStorage.getItem('kanawa_pending_email') || ($('signupOtpEmail') && $('signupOtpEmail').textContent) || '';
+  const token = ($('signupOtpCode') && $('signupOtpCode').value || '').replace(/\D/g, '').trim();
+  const errorBox = $('loginError');
+  if (!email || !/^\d{6}$/.test(token)) {
+    toast('Introduza o código numérico de 6 dígitos recebido por email.', 'warning');
+    return;
+  }
+  const button = $('signupOtpVerify');
+  if (button) button.disabled = true;
+  try {
+    const ctx = await KanawaCloud.verifySignupOtp(email, token);
+    await activateCloudSession(ctx, true);
+    localStorage.removeItem('kanawa_pending_email');
+    if ($('signupOtpPanel')) $('signupOtpPanel').style.display = 'none';
+    if ($('loginForm')) $('loginForm').style.display = '';
+    mostrarAplicacaoAutenticada(ctx);
+    toast('Email confirmado. Conta ativada com sucesso.', 'success');
+  } catch (error) {
+    if (errorBox) { errorBox.textContent = error.message || 'Código inválido ou expirado.'; errorBox.classList.add('show'); }
+    else toast(error.message || 'Código inválido ou expirado.', 'error');
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function reenviarCodigoEmail() {
+  const email = localStorage.getItem('kanawa_pending_email') || ($('signupOtpEmail') && $('signupOtpEmail').textContent) || '';
+  if (!email) return toast('Não foi encontrado um email pendente.', 'warning');
+  try {
+    await KanawaCloud.resendSignupOtp(email);
+    toast('Novo código solicitado. Verifique a caixa de entrada e o spam.', 'success');
+  } catch (error) {
+    toast(error.message || 'Não foi possível reenviar o código. Aguarde antes de tentar novamente.', 'error');
   }
 }
 
